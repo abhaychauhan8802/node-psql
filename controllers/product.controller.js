@@ -15,3 +15,42 @@ exports.getAllProducts = async (req, res) => {
     return res.status(500).json(error);
   }
 };
+
+exports.createProduct = async (req, res) => {
+  const { name, description, price, currency, quantity, active, category_id } =
+    req.body;
+
+  try {
+    if (!name) {
+      return res.status(422).json({ error: "name is required" });
+    }
+
+    if (!price) {
+      return res.status(422).json({ error: "price is required" });
+    }
+
+    if (!category_id) {
+      return res.status(422).json({ error: "category is required" });
+    }
+
+    const result = await pool.query({
+      text: `INSERT INTO 
+            product (name, description, price, currency, quantity, active, category_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *`,
+      values: [
+        name,
+        description ? description : null,
+        price,
+        currency ? currency : "USD",
+        quantity ? quantity : 0,
+        "active" in req.body ? active : true,
+        category_id,
+      ],
+    });
+
+    return res.status(201).json(result.rows[0]);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
