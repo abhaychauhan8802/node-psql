@@ -8,6 +8,6 @@ const {
 
 router.get("/categories", getAllCategories);
 router.post("/create-category", createCategory);
-router.put("/update-category", updateCategory);
+router.put("/update-category/:id", updateCategory);
 
 module.exports = router;

@@ -39,23 +39,22 @@ exports.createCategory = async (req, res) => {
 };
 
 exports.updateCategory = async (req, res) => {
-  const { id, name } = req.body;
+  const { name } = req.body;
+  const { id } = req.params;
 
   try {
     if (!name) {
       return res.status(422).json({ error: "Name is required" });
-    }
-
-    if (!id) {
-      return res.status(422).json({ error: "Category id is required" });
     } else {
       const isExist = await pool.query({
-        text: "SELECT EXISTS (SELECT * FROM category WHERE id = $1)",
-        values: [id],
+        text: "SELECT EXISTS (SELECT * FROM category WHERE name = $1)",
+        values: [name],
       });
 
-      if (!isExist.rows[0].exists) {
-        return res.status(422).json({ error: "Category not found" });
+      if (isExist.rows[0].exists) {
+        return res
+          .status(422)
+          .json({ error: `Category ${name} already exist` });
       }
     }
 
@@ -66,6 +65,10 @@ exports.updateCategory = async (req, res) => {
               RETURNING *`,
       values: [name, id],
     });
+
+    if (result.rowCount === 0) {
+      return res.status(422).json({ error: "Category id not found" });
+    }
 
     return res.status(200).json(result.rows[0]);
   } catch (error) {
