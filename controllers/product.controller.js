@@ -31,6 +31,15 @@ exports.createProduct = async (req, res) => {
 
     if (!category_id) {
       return res.status(422).json({ error: "category is required" });
+    } else {
+      const isExist = await pool.query({
+        text: `SELECT EXISTS (SELECT * FROM category WHERE id = $1)`,
+        values: [category_id],
+      });
+
+      if (!isExist.rows[0].exists) {
+        return res.status(422).json({ error: "Category not exist" });
+      }
     }
 
     const result = await pool.query({
