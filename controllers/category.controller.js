@@ -67,10 +67,39 @@ exports.updateCategory = async (req, res) => {
     });
 
     if (result.rowCount === 0) {
-      return res.status(422).json({ error: "Category id not found" });
+      return res.status(404).json({ error: "Category id not found" });
     }
 
     return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    return res.json(error);
+  }
+};
+
+exports.deleteCategory = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const countResult = await pool.query({
+      text: `SELECT * FROM product WHERE category_id = $1`,
+      values: [id],
+    });
+
+    if (countResult.rows.length > 0) {
+      return res.status(409).json({
+        error: `Category is being used in ${countResult.rows.length} product(s)`,
+      });
+    }
+
+    const result = await pool.query({
+      text: `DELETE FROM category WHERE id = $1`,
+      values: [id],
+    });
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Category id not found" });
+    }
+
+    res.status(200).json({ success: "Category deleted successfully" });
   } catch (error) {
     return res.json(error);
   }
