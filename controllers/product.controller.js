@@ -63,3 +63,60 @@ exports.createProduct = async (req, res) => {
     return res.status(500).json(error);
   }
 };
+
+exports.updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const { name, description, price, currency, quantity, active, category_id } =
+    req.body;
+
+  try {
+    if (
+      (!name, !description, !price, !currency, !quantity, !active, !category_id)
+    ) {
+      return res.status(422).json({ error: "All fields are required" });
+    }
+
+    const result = await pool.query({
+      text: `UPDATE product
+             SET name = $1, description = $2, price = $3, currency = $4, quantity = $5, active = $6, category_id = $7, updated_date = CURRENT_TIMESTAMP 
+             WHERE id = $8
+             RETURNING *`,
+      values: [
+        name,
+        description,
+        price,
+        currency,
+        quantity,
+        active,
+        category_id,
+        id,
+      ],
+    });
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+exports.deleteProduct = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query({
+      text: `DELETE FROM product WHERE id = $1`,
+      values: [id],
+    });
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Product not exist" });
+    }
+
+    return res.status(200).json({ success: "Product deleted successfully" });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
